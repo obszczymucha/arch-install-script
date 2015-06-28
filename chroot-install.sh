@@ -57,7 +57,7 @@ function run {
 run
 
 if [ $? = 0 ]; then
-  log_progress "Installation successful!"
+  log_progress "Installation successful! Type 'reboot' and enjoy your Arch Linux!"
 else
   log_progress "ERROR: Installation did not complete successfully!"
 fi
