@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source install.config
+PASSWORD=$(/usr/bin/openssl passwd -crypt 'vagrant')
 
 function set_locale {
   log_progress "Setting locale to UTF-8..."
@@ -46,12 +47,26 @@ function install_bootloader {
   grub-mkconfig -o /boot/grub/grub.cfg
 }
 
+function create_vagrant_user_for_bootstrapping {
+  log_progress "Creating vagrant user for bootstrapping..."
+  groupadd vagrant
+  useradd --password ${PASSWORD} --comment 'Vagrant User' --create-home --gid users --groups vagrant vagrant
+  echo 'Defaults env_keep += "SSH_AUTH_SOCK"' > /etc/sudoers.d/10_vagrant
+  echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers.d/10_vagrant
+  chmod 0440 /etc/sudoers.d/10_vagrant
+  install --directory --owner=vagrant --group=users --mode=0700 /home/vagrant/.ssh
+  curl --output /home/vagrant/.ssh/authorized_keys --location https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub
+  chown vagrant:users /home/vagrant/.ssh/authorized_keys
+  chmod 0600 /home/vagrant/.ssh/authorized_keys
+}
+
 function run {
   set_locale && \
   set_timezone_and_clock && \
   set_hostname && \
   enable_dhcp && \
-  install_bootloader
+  install_bootloader && \
+  create_vagrant_user_for_bootstrapping
 }
 
 run
