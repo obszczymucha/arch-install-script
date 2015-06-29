@@ -60,13 +60,21 @@ function create_vagrant_user_for_bootstrapping {
   chmod 0600 /home/vagrant/.ssh/authorized_keys
 }
 
+function install_and_enable_sshd {
+  log_progress "Installing and enabling sshd..."
+  pacman -S --noconfirm openssh
+  systemctl enable sshd.service
+  systemctl start sshd
+}
+
 function run {
   set_locale && \
   set_timezone_and_clock && \
   set_hostname && \
   enable_dhcp && \
   install_bootloader && \
-  create_vagrant_user_for_bootstrapping
+  create_vagrant_user_for_bootstrapping && \
+  install_and_enable_sshd
 }
 
 run
