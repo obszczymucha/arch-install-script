@@ -67,6 +67,11 @@ function install_and_enable_sshd {
   systemctl start sshd
 }
 
+function install_python2_for_ansible_bootstrapping {
+  log_progress "Installing python2 for ansible bootstrapping..."
+  pacman -S --noconfirm python2
+}
+
 function run {
   set_locale && \
   set_timezone_and_clock && \
@@ -74,7 +79,8 @@ function run {
   enable_dhcp && \
   install_bootloader && \
   create_vagrant_user_for_bootstrapping && \
-  install_and_enable_sshd
+  install_and_enable_sshd && \
+  install_python2_for_ansible_bootstrapping
 }
 
 run
