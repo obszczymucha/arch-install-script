@@ -42,9 +42,12 @@ function enable_dhcp {
 
 function install_bootloader {
   log_progress "Installing bootloader..."
-  pacman -S --noconfirm grub os-prober
-  grub-install --recheck ${DESTINATION_DEVICE}
-  grub-mkconfig -o /boot/grub/grub.cfg
+  pacman -S --noconfirm dosfstools
+  bootctl --path=/boot install
+  echo "title       Arch Linux" > /boot/loader/entries/arch.conf
+  echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
+  echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
+  echo "options     root=${DESTINATION_DEVICE}1 rw" >> /boot/loader/entries/arch.conf
 }
 
 function create_vagrant_user_for_bootstrapping {
