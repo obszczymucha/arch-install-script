@@ -50,7 +50,9 @@ function install_bootloader {
   echo "title       Arch Linux" > /boot/loader/entries/arch.conf
   echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
   echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
-  echo "options     root=${DESTINATION_DEVICE}1 rw" >> /boot/loader/entries/arch.conf
+  echo "options     root=${DESTINATION_DEVICE}2 rw" >> /boot/loader/entries/arch.conf
+  echo "timeout 3" > /boot/loader/loader.conf
+  echo "default arch" >> /boot/loader/loader.conf
 }
 
 function create_vagrant_user_for_bootstrapping {
