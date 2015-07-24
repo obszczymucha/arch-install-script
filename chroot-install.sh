@@ -50,7 +50,7 @@ function install_bootloader {
   echo "title       Arch Linux" > /boot/loader/entries/arch.conf
   echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
   echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
-  echo "options     root=${DESTINATION_DEVICE}2 rw" >> /boot/loader/entries/arch.conf
+  echo "options     root=${DESTINATION_DEVICE}2 rw ipv6.disable=1" >> /boot/loader/entries/arch.conf # b43.allowhwsupport=1 modprobe.blacklist=brcm80211
   echo "timeout 3" > /boot/loader/loader.conf
   echo "default arch" >> /boot/loader/loader.conf
 }
