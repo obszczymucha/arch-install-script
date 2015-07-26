@@ -26,7 +26,8 @@ function check_configuration {
 
 function create_partitions {
   log_progress "Creating partitions..."
-  parted -s ${DESTINATION_DEVICE} < parted.config
+  parted -s ${DESTINATION_DEVICE} mklabel msdos
+  parted ${DESTINATION_DEVICE} < parted.config
 }
 
 function format_partitions {
