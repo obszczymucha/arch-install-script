@@ -43,15 +43,32 @@ function enable_dhcp {
   systemctl enable dhcpcd@${NETWORK_INTERFACE}.service
 }
 
+function get_partuuid {
+  DISK=$1
+  REGEX="\"(.*)\""
+  BLKID_OUTPUT=$(blkid $DISK -s PARTUUID)
+
+  [[ $BLKID_OUTPUT =~ $REGEX ]]
+
+  if [ -z "$BASH_REMATCH" ]; then
+    echo "Unable to extract PARTUUID for ${DISK}!"
+    exit 1
+  fi
+
+  echo ${BASH_REMATCH[1]}
+}
+
 function install_bootloader {
   log_progress "Installing bootloader..."
+  local PARTUUID=$(get_partuuid ${DESTINATION_DEVICE}2)
+
   pacman -S --noconfirm dosfstools
   bootctl --path=/boot install
   echo "title       Arch Linux" > /boot/loader/entries/arch.conf
   echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
   echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
-  echo "options     root=${DESTINATION_DEVICE}2 rw ipv6.disable=1 i915.enable_ips=0" >> /boot/loader/entries/arch.conf
-  echo "timeout 3" > /boot/loader/loader.conf
+  echo "options     root=UUID=${PARTUUID} quiet rw ipv6.disable=1 i915.enable_ips=0" >> /boot/loader/entries/arch.conf
+  echo "timeout 0" > /boot/loader/loader.conf
   echo "default arch" >> /boot/loader/loader.conf
 }
 
