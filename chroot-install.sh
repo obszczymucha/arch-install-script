@@ -60,7 +60,7 @@ function get_partuuid {
 
 function install_bootloader {
   log_progress "Installing bootloader..."
-  local PARTUUID=$(get_partuuid ${DESTINATION_DEVICE}2)
+  local PARTUUID=$(get_partuuid ${DESTINATION_DEVICE}3)
 
   pacman -S --noconfirm dosfstools
   bootctl --path=/boot install
