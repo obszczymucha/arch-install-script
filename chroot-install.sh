@@ -67,7 +67,7 @@ function install_bootloader {
   echo "title       Arch Linux" > /boot/loader/entries/arch.conf
   echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
   echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
-  echo "options     root=PARTUUID=${PARTUUID} quiet rw ipv6.disable=1 i915.enable_ips=0" >> /boot/loader/entries/arch.conf
+  echo "options     root=PARTUUID=${PARTUUID} quiet loglevel=3 rd.udev.log-priority=3 vga=current rw ipv6.disable=1 i915.enable_ips=0" >> /boot/loader/entries/arch.conf
   echo "timeout 0" > /boot/loader/loader.conf
   echo "default arch" >> /boot/loader/loader.conf
 }
