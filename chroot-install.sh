@@ -66,6 +66,7 @@ function create_bootstrap_user_for_bootstrapping {
   cat /home/bootstrap/.ssh/bootstrap.pub > /home/bootstrap/.ssh/authorized_keys
   chown bootstrap:users /home/bootstrap/.ssh/authorized_keys
   chmod 0600 /home/bootstrap/.ssh/authorized_keys
+  cp /home/bootstrap/.ssh/bootstrap /root/.ssh
 }
 
 function install_and_enable_sshd {
@@ -80,6 +81,11 @@ function install_python2_for_ansible_bootstrapping {
   pacman -S --noconfirm python2
 }
 
+function install_ansible {
+  log_progress "Installing ansible..."
+  pacman -S --noconfirm ansible
+}
+
 function run {
   set_locale
   set_timezone_and_clock
@@ -89,6 +95,7 @@ function run {
   create_bootstrap_user_for_bootstrapping
   install_and_enable_sshd
   install_python2_for_ansible_bootstrapping
+  install_ansible
 }
 
 run
