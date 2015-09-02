@@ -4,7 +4,7 @@ source install.config
 
 set -e
 
-PASSWORD=$(/usr/bin/openssl passwd -crypt 'vagrant')
+PASSWORD=$(/usr/bin/openssl passwd -crypt 'bootstrap')
 
 function set_locale {
   log_progress "Setting locale to UTF-8..."
@@ -72,17 +72,22 @@ function install_bootloader {
   echo "default arch" >> /boot/loader/loader.conf
 }
 
-function create_vagrant_user_for_bootstrapping {
-  log_progress "Creating vagrant user for bootstrapping..."
-  groupadd vagrant
-  useradd --password ${PASSWORD} --comment 'Vagrant User' --create-home --gid users --groups vagrant vagrant
-  echo 'Defaults env_keep += "SSH_AUTH_SOCK"' > /etc/sudoers.d/10_vagrant
-  echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers.d/10_vagrant
-  chmod 0440 /etc/sudoers.d/10_vagrant
-  install --directory --owner=vagrant --group=users --mode=0700 /home/vagrant/.ssh
-  curl --output /home/vagrant/.ssh/authorized_keys --location https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub
-  chown vagrant:users /home/vagrant/.ssh/authorized_keys
-  chmod 0600 /home/vagrant/.ssh/authorized_keys
+function create_bootstrap_user_for_bootstrapping {
+  log_progress "Creating bootstrap user for bootstrapping..."
+  groupadd bootstrap
+  useradd --password ${PASSWORD} --comment 'Bootstrap User' --create-home --gid users --groups bootstrap bootstrap
+  echo 'Defaults env_keep += "SSH_AUTH_SOCK"' > /etc/sudoers.d/10_bootstrap
+  echo 'bootstrap ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers.d/10_bootstrap
+  chmod 0440 /etc/sudoers.d/10_bootstrap
+  install --directory --owner=bootstrap --group=users --mode=0700 /home/bootstrap/.ssh
+  ssh-keygen -P '' -f /home/bootstrap/.ssh/bootstrap
+  chown bootstrap:users /home/bootstrap/.ssh/bootstrap
+  chmod 0600 /home/bootstrap/.ssh/bootstrap
+  chown bootstrap:users /home/bootstrap/.ssh/bootstrap.pub
+  chmod 0600 /home/bootstrap/.ssh/bootstrap.pub
+  cat /home/bootstrap/.ssh/bootstrap.pub > /home/bootstrap/.ssh/authorized_keys
+  chown bootstrap:users /home/bootstrap/.ssh/authorized_keys
+  chmod 0600 /home/bootstrap/.ssh/authorized_keys
 }
 
 function install_and_enable_sshd {
@@ -103,7 +108,7 @@ function run {
   set_hostname
   enable_dhcp
   install_bootloader
-  create_vagrant_user_for_bootstrapping
+  create_bootstrap_user_for_bootstrapping
   install_and_enable_sshd
   install_python2_for_ansible_bootstrapping
 }
