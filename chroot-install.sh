@@ -72,6 +72,13 @@ function install_bootloader {
   echo "default arch" >> /boot/loader/loader.conf
 }
 
+function install_and_enable_sshd {
+  log_progress "Installing and enabling sshd..."
+  pacman -S --noconfirm openssh
+  systemctl enable sshd.service
+  systemctl start sshd
+}
+
 function create_bootstrap_user_for_bootstrapping {
   log_progress "Creating bootstrap user for bootstrapping..."
   groupadd bootstrap
@@ -114,8 +121,8 @@ function run {
   set_hostname
   enable_dhcp
   install_bootloader
-  create_bootstrap_user_for_bootstrapping
   install_and_enable_sshd
+  create_bootstrap_user_for_bootstrapping
   install_python2_for_ansible_bootstrapping
   install_ansible
 }
