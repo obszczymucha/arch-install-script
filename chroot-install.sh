@@ -43,11 +43,40 @@ function enable_dhcp {
   systemctl enable dhcpcd@${NETWORK_INTERFACE}.service
 }
 
-function install_bootloader {
+function install_grub_bootloader {
   log_progress "Installing bootloader..."
   pacman -S --noconfirm grub os-prober
   grub-install --recheck ${DESTINATION_DEVICE}
   grub-mkconfig -o /boot/grub/grub.cfg
+}
+
+function get_partuuid {
+  DISK=$1
+  REGEX="\"(.*)\""
+  BLKID_OUTPUT=$(blkid $DISK -s PARTUUID)
+
+  [[ $BLKID_OUTPUT =~ $REGEX ]]
+
+  if [ -z "$BASH_REMATCH" ]; then
+    echo "Unable to extract PARTUUID for ${DISK}!"
+    exit 1
+  fi
+
+  echo ${BASH_REMATCH[1]}
+}
+
+function install_uefi_bootloader {
+  log_progress "Installing bootloader..."
+  local PARTUUID=$(get_partuuid ${DESTINATION_DEVICE}2)
+
+  pacman -S --noconfirm dosfstools
+  bootctl --path=/boot install
+  echo "title       Arch Linux" > /boot/loader/entries/arch.conf
+  echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
+  echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
+  echo "options     root=PARTUUID=${PARTUUID} quiet loglevel=3 rd.udev.log-priority=3 vga=current rw ipv6.disable=1" >> /boot/loader/entries/arch.conf
+  echo "timeout 0" > /boot/loader/loader.conf
+  echo "default arch" >> /boot/loader/loader.conf
 }
 
 function install_and_enable_sshd {
@@ -103,7 +132,7 @@ function run {
   set_timezone_and_clock
   set_hostname
   enable_dhcp
-  install_bootloader
+  install_uefi_bootloader
   install_and_enable_sshd
   create_bootstrap_user_for_bootstrapping
   install_python2_for_ansible_bootstrapping

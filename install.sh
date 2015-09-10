@@ -32,7 +32,7 @@ function create_partitions {
 
 function format_partitions {
   log_progress "Formatting partitions..."
-  mkfs.ext4 -F ${DESTINATION_DEVICE}1
+  mkfs.vfat -F32 {$DESTINATION_DEVICE}1
   mkfs.ext4 -F ${DESTINATION_DEVICE}2
   mkswap ${DESTINATION_DEVICE}3
   swapon ${DESTINATION_DEVICE}3
