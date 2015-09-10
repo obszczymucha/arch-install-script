@@ -93,6 +93,11 @@ function install_ansible {
   pacman -S --noconfirm ansible
 }
 
+function install_wifi_essentials {
+  log_progress "Installing wifi essentials..."
+  pacman -S --noconfirm dialog wpa_supplicant
+}
+
 function run {
   set_locale
   set_timezone_and_clock
@@ -102,6 +107,7 @@ function run {
   install_and_enable_sshd
   create_bootstrap_user_for_bootstrapping
   install_python2_for_ansible_bootstrapping
+  install_wifi_essentials
   install_ansible
 }
 
