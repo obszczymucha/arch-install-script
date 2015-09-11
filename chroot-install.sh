@@ -95,7 +95,9 @@ function create_bootstrap_user_for_bootstrapping {
   cat /home/bootstrap/.ssh/bootstrap.pub > /home/bootstrap/.ssh/authorized_keys
   chown bootstrap:users /home/bootstrap/.ssh/authorized_keys
   chmod 0600 /home/bootstrap/.ssh/authorized_keys
-  cp /home/bootstrap/.ssh/bootstrap /root/.ssh
+  mkdir /root/.ssh
+  chmod 0700 /root/.ssh
+  cp /home/bootstrap/.ssh/bootstrap /root/.ssh/
 }
 
 function install_and_enable_sshd {
