@@ -26,26 +26,24 @@ function check_configuration {
 
 function create_partitions {
   log_progress "Creating partitions..."
-  parted -s ${DESTINATION_DEVICE} mklabel msdos
   parted ${DESTINATION_DEVICE} < parted.config
 }
 
 function format_partitions {
   log_progress "Formatting partitions..."
-  mkfs.vfat -F32 {$DESTINATION_DEVICE}1
-  mkfs.ext4 -F ${DESTINATION_DEVICE}2
-  mkswap ${DESTINATION_DEVICE}3
-  swapon ${DESTINATION_DEVICE}3
   mkfs.ext4 -F ${DESTINATION_DEVICE}4
+  mkswap ${DESTINATION_DEVICE}5
+  swapon ${DESTINATION_DEVICE}5
+  mkfs.ext4 -F ${DESTINATION_DEVICE}6
 }
 
 function mount_partitions_for_installation {
   log_progress "Mounting partitions for installation..."
-  mount ${DESTINATION_DEVICE}2 /mnt
+  mount ${DESTINATION_DEVICE}4 /mnt
   mkdir -p /mnt/boot
   mount ${DESTINATION_DEVICE}1 /mnt/boot
   mkdir -p /mnt/home
-  mount ${DESTINATION_DEVICE}4 /mnt/home
+  mount ${DESTINATION_DEVICE}6 /mnt/home
 }
 
 function install_the_base_system {
