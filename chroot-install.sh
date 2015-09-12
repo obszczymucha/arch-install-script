@@ -69,10 +69,11 @@ function install_uefi_bootloader {
   log_progress "Installing bootloader..."
   local PARTUUID=$(get_partuuid ${DESTINATION_DEVICE}4)
 
-  pacman -S --noconfirm dosfstools
+  pacman -S --noconfirm dosfstools intel-ucode
   bootctl --path=/boot install
   echo "title       Arch Linux" > /boot/loader/entries/arch.conf
   echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
+  echo "initrd      /intel-ucode.img" >> /boot/loader/entries/arch.conf
   echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
   echo "options     root=PARTUUID=${PARTUUID} quiet loglevel=3 rd.udev.log-priority=3 vga=current rw ipv6.disable=1" >> /boot/loader/entries/arch.conf
   echo "timeout 0" > /boot/loader/loader.conf
