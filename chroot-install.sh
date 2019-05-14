@@ -75,7 +75,7 @@ function install_uefi_bootloader {
   echo "linux       /vmlinuz-linux" >> /boot/loader/entries/arch.conf
   echo "initrd      /intel-ucode.img" >> /boot/loader/entries/arch.conf
   echo "initrd      /initramfs-linux.img" >> /boot/loader/entries/arch.conf
-  echo "options     root=PARTUUID=${PARTUUID} quiet loglevel=0 systemd.show_status=0 rd.udev.log_priority=0 vga=current rw ipv6.disable=1" >> /boot/loader/entries/arch.conf
+  echo "options     root=PARTUUID=${PARTUUID} quiet loglevel=0 systemd.show_status=0 rd.udev.log_priority=0 vga=current vt.global_cursor_default=0 rw ipv6.disable=1" >> /boot/loader/entries/arch.conf
   echo "timeout 0" > /boot/loader/loader.conf
   echo "default arch" >> /boot/loader/loader.conf
 }
