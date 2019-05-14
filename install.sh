@@ -26,13 +26,13 @@ function check_configuration {
 
 function create_partitions {
   log_progress "Creating partitions..."
-  parted -s ${DESTINATION_DEVICE} mklabel msdos
+  parted -s ${DESTINATION_DEVICE} mklabel gpt
   parted ${DESTINATION_DEVICE} < parted.config
 }
 
 function format_partitions {
   log_progress "Formatting partitions..."
-  mkfs.vfat -F32 {$DESTINATION_DEVICE}1
+  mkfs.vfat -F32 ${DESTINATION_DEVICE}1
   mkfs.ext4 -F ${DESTINATION_DEVICE}2
   mkswap ${DESTINATION_DEVICE}3
   swapon ${DESTINATION_DEVICE}3
