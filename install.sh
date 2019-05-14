@@ -63,8 +63,8 @@ function mount_partitions_for_installation {
 }
 
 function find_the_fastest_mirror {
-    pacman -Sy reflector
-    eval $(reflector --verbose --country '${COUNTRY}' -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist)
+    pacman -Sy --noconfirm reflector
+    eval $(echo "reflector --verbose --country '${COUNTRY}' -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist")
 }
 
 function install_the_base_system {
