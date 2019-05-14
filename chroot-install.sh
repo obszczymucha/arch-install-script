@@ -16,7 +16,7 @@ function set_locale {
 
 function set_timezone_and_clock {
   log_progress "Setting timezone and clock..."
-  ln -sf /usr/share/zoneinfo/Europe/Dublin /etc/localtime
+  ln -sf /usr/share/zoneinfo/${COUNTRY}/${CITY} /etc/localtime
   hwclock --systohc --utc
 }
 
