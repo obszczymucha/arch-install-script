@@ -14,6 +14,20 @@ function check_configuration {
     echo "Found DESTINATION_DEVICE set to $DESTINATION_DEVICE"
   fi
 
+  if [ -z "$COUNTRY" ]; then
+    echo "COUNTRY is not defined."
+    return 1
+  else
+    echo "Found COUNTRY set to $COUNTRY"
+  fi
+
+  if [ -z "$CITY" ]; then
+    echo "CITY is not defined."
+    return 1
+  else
+    echo "Found CITY set to $CITY"
+  fi
+
   if [ -f "parted.config" ]; then
     echo "Found parted configuration file."
   else
@@ -48,6 +62,11 @@ function mount_partitions_for_installation {
   mount ${DESTINATION_DEVICE}4 /mnt/home
 }
 
+function find_the_fastest_mirror {
+    pacman -Sy reflector
+    eval $(reflector --verbose --country '${COUNTRY}' -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist)
+}
+
 function install_the_base_system {
   log_progress "Installing the base system..."
   pacstrap /mnt base base-devel
@@ -72,6 +91,7 @@ function run {
   create_partitions
   format_partitions
   mount_partitions_for_installation
+  find_the_fastest_mirror
   install_the_base_system
   generate_fstab
   chroot_install
