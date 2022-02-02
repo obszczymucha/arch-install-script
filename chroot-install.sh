@@ -61,6 +61,9 @@ function get_network_interface {
 }
 
 function enable_dhcp {
+  log_progress "Installing dhcpcd..."
+  pacman -S --noconfirm dhcpcd
+
   log_progress "Enabling DHCP..."
   local NETWORK_INTERFACE=$(get_network_interface)
 
