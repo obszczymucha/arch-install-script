@@ -6,6 +6,37 @@ set -e
 
 PASSWORD=$(/usr/bin/openssl passwd -crypt 'bootstrap')
 
+repeat() {
+  if [[ $# != 3 ]]; then
+    echo "Invalid call to repeat(): not enough arguments."
+    exit 1
+  fi
+
+  local RETRY="$1"
+  local SLEEP_IN_SECONDS="$2"
+  local FUNCTION="$3"
+  local SUCCESS=0
+
+  for i in $(seq $RETRY); do
+    if [[ $i > 1 ]]; then
+      echo "Retrying in $SLEEP_IN_SECONDS seconds..."
+      sleep $SLEEP_IN_SECONDS
+    fi
+
+    $FUNCTION
+    local RESULT=$(echo $?)
+
+    if [[ "$RESULT" == 0 ]]; then
+      SUCCESS=1
+      break
+    fi
+  done
+
+  if [[ "$SUCCESS" == 0 ]]; then
+    exit 1;
+  fi
+}
+
 function set_locale {
   log_progress "Setting locale to UTF-8..."
   sed -i "s/#en_US\.UTF-8 UTF-8/en_US\.UTF-8 UTF-8/g" /etc/locale.gen
@@ -40,7 +71,13 @@ function enable_dhcp {
     echo "Found active network interface: ${NETWORK_INTERFACE}"
   fi
 
-  systemctl enable dhcpcd@${NETWORK_INTERFACE}.service
+  enable_dhcpcd_service() {
+    systemctl enable dhcpcd@${NETWORK_INTERFACE}.service
+  }
+
+  set +e
+  repeat 5 2 "enable_dhcpcd_service"
+  set -e
 }
 
 function get_partuuid {
