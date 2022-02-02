@@ -51,7 +51,7 @@ function mount_partitions_for_installation {
 
 function install_the_base_system {
   log_progress "Installing the base system..."
-  pacstrap /mnt base base-devel
+  pacstrap /mnt base base-devel linux linux-firmware
 }
 
 function generate_fstab {
