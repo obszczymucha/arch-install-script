@@ -9,15 +9,27 @@ HOSTNAME=audio
 # It contains a log of steps that were performed, so they don't have to be
 # repeated. If you need to repeate a step, remove the that corresponts to the
 # step from this file.
-STATE_FILE='.state'
-MAIN_USER_FILE=".main_user"
-
-function timed_info() {
-  echo -e "\n"[$(date +"%Y-%m-%d %k:%M:%S")]: "$1" >&2
-}
 
 function info() {
   echo "$@" >&2
+}
+
+function check_project_directory() {
+  PWD=$(pwd -P)
+
+  if [[ ! -f "${PWD}/bootstrap.sh" ]]; then
+    info "Please run ./boostrap.sh from within project's directory."
+    exit 1
+  fi
+
+  STATE_FILE="${PWD}/.state"
+  MAIN_USER_FILE="${PWD}/.main_user"
+
+  info "State: $STATE_FILE  user: $MAIN_USER_FILE"
+}
+
+function timed_info() {
+  echo -e "\n"[$(date +"%Y-%m-%d %k:%M:%S")]: "$1" >&2
 }
 
 function check_for_root() {
@@ -28,6 +40,8 @@ function check_for_root() {
 }
 
 function step_executed() {
+  cd "$PWD"
+
   if [[ $# == 0 ]]; then return 1; fi
 
   if ! grep -Eq "^$@$" "$STATE_FILE" 2>&1 >/dev/null; then
@@ -330,11 +344,12 @@ function clone_dotfiles_for_root() {
   git -C "$repo_dir" worktree add wsl
   git -C "$repo_dir" worktree add msi
   git -C "$repo_dir" worktree add xps13
-  git -C "$repo_dir/wsl" branch --set-upstream-to=origin/wsl
-  git -C "$repo_dir/msi" branch --set-upstream-to=origin/msi
-  git -C "$repo_dir/xps13" branch --set-upstream-to=origin/xps13
+  git -C "${repo_dir}/wsl" branch --set-upstream-to=origin/wsl
+  git -C "${repo_dir}/msi" branch --set-upstream-to=origin/msi
+  git -C "${repo_dir}/xps13" branch --set-upstream-to=origin/xps13
 
-  ln -s "${repo_dir}/wsl" "${repo_dir}/current"
+  cd "${repo_dir}"
+  ln -s wsl current
 
   mark_step_as_executed "$step"
 }
@@ -383,12 +398,13 @@ function clone_dotfiles_for_main_user() {
   git -C "$repo_dir" worktree add wsl
   git -C "$repo_dir" worktree add msi
   git -C "$repo_dir" worktree add xps13
-  git -C "$repo_dir/wsl" branch --set-upstream-to=origin/wsl
-  git -C "$repo_dir/msi" branch --set-upstream-to=origin/msi
-  git -C "$repo_dir/xps13" branch --set-upstream-to=origin/xps13
+  git -C "${repo_dir}/wsl" branch --set-upstream-to=origin/wsl
+  git -C "${repo_dir}/msi" branch --set-upstream-to=origin/msi
+  git -C "${repo_dir}/xps13" branch --set-upstream-to=origin/xps13
 
   chown -R "${MAIN_USER}:${MAIN_USER}" "$repo_dir"
-  su -c "ln -s ${repo_dir}/wsl ${repo_dir}/current" "${MAIN_USER}"
+  cd "$repo_dir"
+  su -c "ln -s wsl current" "${MAIN_USER}"
 
   mark_step_as_executed "$step"
 }
@@ -428,7 +444,7 @@ function install_oh_my_posh() {
     su - -c "git clone https://aur.archlinux.org/oh-my-posh.git $repo_dir" "$MAIN_USER"
     su - -c "cd $repo_dir; makepkg -s --noconfirm" "$MAIN_USER"
   else
-    timed_info "Updating oh-my-posh..."
+    timed_info "Checking for oh-my-posh updates..."
     su - -c "git -C $repo_dir fetch" "$MAIN_USER"
     local behind_count=$(git -C "$repo_dir" rev-list --count master..origin/master)
 
@@ -475,6 +491,7 @@ function main() {
 }
 
 check_for_root
+check_project_directory
 main
 
 if [ $? = 0 ]; then
