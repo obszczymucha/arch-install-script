@@ -22,6 +22,7 @@ function main() {
     git-lfs \
     gocryptfs \
     icoutils \
+    inetutils \
     inotify-tools \
     jq \
     less \

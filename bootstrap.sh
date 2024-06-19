@@ -265,8 +265,9 @@ function main() {
   set_locale
   set_timezone_and_clock
   set_hostname
-  generate_sshd_keys
-  enable_sshd
+  # Seems like WSL2 is running OpenSSH
+  # generate_sshd_keys
+  # enable_sshd
   clone_dotfiles_for_root
   clone_nvim_config_for_root
   create_main_user
