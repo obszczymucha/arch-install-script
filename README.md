@@ -9,17 +9,22 @@ maintain Arch Linux on WSL2.
 
 ### Prepare bootstrap archive
 Run:
+
 ```bash
 sudo ./create-bootstrap.sh
 ```
 
+
 ### Add the distro in WSL2
+
 In PowerShell, run:
 ```PowerShell
 wsl --import Archlinux I:\wsl2\Archlinux-20240601 I:\iNsTaLL\Arch-Bootstrap-20240601.tar.gz
 ```
 
+
 ### Launch the distro
+
 In PowerShell, run:
 ```PowerShell
 wsl -d Archlinux ~
@@ -29,11 +34,14 @@ wsl -d Archlinux ~
 ### Run the bootstrap script
 ```bash
 cd arch-install-script
-./bootstrap.sh
+MAIN_USER=princesskenny ./bootstrap.sh
 ```
+
+**NOTE**: Replace `princesskenny` with your main username.
 
 
 ## Maintenance
+
 To refresh pacman packages, run:
 ```bash
 ./pacman.sh
