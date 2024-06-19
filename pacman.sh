@@ -34,6 +34,8 @@ function main() {
     ncdu \
     neovim \
     net-tools \
+    nodejs \
+    npm \
     openssh \
     pacman-contrib \
     pkg-config \
