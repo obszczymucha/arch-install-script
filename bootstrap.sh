@@ -26,6 +26,20 @@ function check_for_root() {
   fi
 }
 
+function step_executed() {
+  if [[ $# == 0 ]]; then return 1; fi
+
+  if ! grep -Eq "^$@$" "$STATE_FILE" 2>&1 >/dev/null; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+function mark_step_as_executed() {
+  echo "$@" >> "$STATE_FILE"
+}
+
 function check_configuration() {
   timed_info "Checking configuration..."
 
@@ -39,26 +53,12 @@ function check_configuration() {
     return 1
   fi
 
-  if [[ -z "$MAIN_USER" ]]; then
+  if [[ -z "$MAIN_USER" && ! $(step_executed "create_main_user") ]]; then
     info "MAIN_USER is not defined."
     return 1
   fi
 
   info "Configuration OK."
-}
-
-function step_executed() {
-  if [[ $# == 0 ]]; then return 1; fi
-
-  if ! grep -Eq "^$@$" "$STATE_FILE" 2>&1 >/dev/null; then
-    return 1
-  else
-    return 0
-  fi
-}
-
-function mark_step_as_executed() {
-  echo "$@" >> "$STATE_FILE"
 }
 
 function initialize_arch_keyring() {
@@ -234,13 +234,30 @@ function clone_nvim_config_for_root() {
   mark_step_as_executed "$step"
 }
 
+function add_main_user_to_sudoers() {
+  local step="add_main_user_to_sudoers"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Adding main user to sudoers..."
+  local sudoers_file='/etc/sudoers'
+
+  if ! grep -q "$MAIN_USER ALL=(ALL:ALL) ALL" "$sudoers_file" 2> /dev/null; then
+    echo "$MAIN_USER ALL=(ALL:ALL) ALL" >> "$sudoers_file"
+  fi
+
+  mark_step_as_executed "$step"
+}
+
 function create_main_user() {
   local step="create_main_user"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Creating main user..."
+  timed_info "Creating main user..."
+  useradd -m -G "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
+  passwd "$MAIN_USER"
+  add_main_user_to_sudoers
 
-  # mark_step_as_executed "$step"
+  mark_step_as_executed "$step"
 }
 
 function clone_dotfiles_for_main_user() {
@@ -252,7 +269,7 @@ function clone_dotfiles_for_main_user() {
   # mark_step_as_executed "$step"
 }
 
-function clone_nvim_config() {
+function clone_nvim_config_for_main_user() {
   local step="clone_nvim_config_for_main_user"
   if $(step_executed "$step"); then return; fi
 
