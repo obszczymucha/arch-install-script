@@ -58,6 +58,9 @@ function check_configuration() {
     "add_main_user_to_sudoers"
     "clone_arch_bootstrap_for_main_user"
     "change_wsl_user_to_main_user"
+    "clone_dotfiles_for_main_user"
+    "stow_dotfiles_for_main_user"
+    "clone_nvim_config_for_main_user"
   )
 
   if [[ -z "$MAIN_USER" ]]; then
@@ -270,6 +273,7 @@ function change_wsl_user_to_main_user() {
   local step="change_wsl_user_to_main_user"
   if $(step_executed "$step"); then return; fi
 
+  mkdir -p "/home/${MAIN_USER}/.config"
   sed -i "/default = root/c\default = $MAIN_USER" /etc/wsl.conf
 
   mark_step_as_executed "$step"
@@ -305,7 +309,7 @@ function clone_dotfiles_for_root() {
   git -C "$repo_dir/msi" branch --set-upstream-to=origin/msi
   git -C "$repo_dir/xps13" branch --set-upstream-to=origin/xps13
 
-  ln -s "$HOME/.dotfiles/wsl" "$HOME/.dotfiles/current"
+  ln -s "${repo_dir}/wsl" "${repo_dir}/current"
 
   mark_step_as_executed "$step"
 }
@@ -346,18 +350,45 @@ function clone_dotfiles_for_main_user() {
   local step="clone_dotfiles_for_main_user"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Cloning dotfiles for main user..."
+  timed_info "Cloning dotfiles for main user..."
+  local repo_dir="/home/${MAIN_USER}/.dotfiles"
+  git clone --bare git@github.com:obszczymucha/dotfiles.git "$repo_dir"
+  git -C "$repo_dir" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+  git -C "$repo_dir" fetch
+  git -C "$repo_dir" worktree add wsl
+  git -C "$repo_dir" worktree add msi
+  git -C "$repo_dir" worktree add xps13
+  git -C "$repo_dir/wsl" branch --set-upstream-to=origin/wsl
+  git -C "$repo_dir/msi" branch --set-upstream-to=origin/msi
+  git -C "$repo_dir/xps13" branch --set-upstream-to=origin/xps13
 
-  # mark_step_as_executed "$step"
+  chown -R "${MAIN_USER}:${MAIN_USER}" "$repo_dir"
+  ln -s "${repo_dir}/wsl" "${repo_dir}/current"
+
+  mark_step_as_executed "$step"
+}
+
+function stow_dotfiles_for_main_user() {
+  local step="stow_dotfiles_for_main_user"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Stowing dotfiles for main user..."
+  mkdir -p "/home/${MAIN_USER}/.config"
+  pushd "/home/${MAIN_USER}/.dotfiles/current" && stow -S -t "/home/$MAIN_USER" . --adopt && popd
+
+  mark_step_as_executed "$step"
 }
 
 function clone_nvim_config_for_main_user() {
   local step="clone_nvim_config_for_main_user"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Cloning nvim_config for main user..."
+  timed_info "Cloning nvim_config for main user..."
+  mkdir -p "/home/${MAIN_USER}/.config"
+  git clone git@github.com:obszczymucha/nvim-config.git "/home/${MAIN_USER}/.config/nvim"
+  chown -R "${MAIN_USER}:${MAIN_USER}" "/home/${MAIN_USER}/.config/nvim"
 
-  # mark_step_as_executed "$step"
+  mark_step_as_executed "$step"
 }
 
 function main() {
@@ -381,6 +412,7 @@ function main() {
   clone_nvim_config_for_root
   change_shell_for_root
   clone_dotfiles_for_main_user
+  stow_dotfiles_for_main_user
   clone_nvim_config_for_main_user
 }
 
