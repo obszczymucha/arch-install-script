@@ -220,6 +220,27 @@ function enable_sshd() {
   mark_step_as_executed "$step"
 }
 
+function create_main_user() {
+  local step="create_main_user"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Creating main user..."
+  # groupadd "$MAIN_USER"
+  # useradd -m -g "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
+  # passwd "$MAIN_USER"
+  # add_main_user_to_sudoers
+
+  local ssh_dir="/home/${MAIN_USER}/.ssh"
+  mkdir -p "$ssh_dir"
+  cp "$HOME/.ssh/*" "${ssh_dir}/"
+  chown "${MAIN_USER}:${MAIN_USER}" "$ssh_dir"
+  chown "${MAIN_USER}:${MAIN_USER}" "$ssh_dir/"*
+  chmod 700 "$ssh_dir"
+  chmod 600 "$ssh_dir/"*
+
+  mark_step_as_executed "$step"
+}
+
 function clone_dotfiles_for_root() {
   local step="clone_dotfiles_for_root"
   if $(step_executed "$step"); then return; fi
@@ -286,19 +307,6 @@ function add_main_user_to_sudoers() {
   mark_step_as_executed "$step"
 }
 
-function create_main_user() {
-  local step="create_main_user"
-  if $(step_executed "$step"); then return; fi
-
-  timed_info "Creating main user..."
-  groupadd "$MAIN_USER"
-  useradd -m -g "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
-  passwd "$MAIN_USER"
-  add_main_user_to_sudoers
-
-  mark_step_as_executed "$step"
-}
-
 function clone_dotfiles_for_main_user() {
   local step="clone_dotfiles_for_main_user"
   if $(step_executed "$step"); then return; fi
@@ -328,11 +336,12 @@ function main() {
   # Seems like WSL2 is running OpenSSH
   # generate_sshd_keys
   # enable_sshd
+  create_main_user
+  install_oh_my_posh
   clone_dotfiles_for_root
   stow_dotfiles_for_root
   clone_nvim_config_for_root
   change_shell_for_root
-  create_main_user
   clone_dotfiles_for_main_user
   clone_nvim_config_for_main_user
 }
