@@ -274,6 +274,7 @@ function clone_arch_bootstrap_for_main_user() {
   mkdir -p "$ops_dir"
 
   git clone git@github.com:obszczymucha/arch-bootstrap.git "${ops_dir}/arch-bootstrap"
+  chown -R "${MAIN_USER}:${MAIN_USER}" "/home/${MAIN_USER}/.projects"
 
   mark_step_as_executed "$step"
 }
