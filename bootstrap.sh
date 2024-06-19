@@ -216,18 +216,22 @@ function clone_dotfiles_for_root() {
   local step="clone_dotfiles_for_root"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Cloning dotfiles for root..."
+  timed_info "Cloning dotfiles for root..."
+  git clone --bare git@github.com:obszczymucha/dotfiles.git "$HOME/.dotfiles"
+  ln -s "$HOME/.dotfiles/wsl" "$HOME/.dotfiles/current"
 
-  # mark_step_as_executed "$step"
+  mark_step_as_executed "$step"
 }
 
 function clone_nvim_config_for_root() {
   local step="clone_nvim_config_for_root"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Cloning nvim_config for root..."
+  timed_info "Cloning nvim_config for root..."
+  mkdir -p "$HOME/.config"
+  git clone git@github.com:obszczymucha/nvim-config.git "$HOME/.config/nvim"
 
-  # mark_step_as_executed "$step"
+  mark_step_as_executed "$step"
 }
 
 function create_main_user() {
