@@ -370,6 +370,7 @@ function main() {
   # generate_sshd_keys
   # enable_sshd
   create_main_user
+  change_wsl_user_to_main_user
   clone_arch_bootstrap_for_main_user
   clone_dotfiles_for_root
   stow_dotfiles_for_root
