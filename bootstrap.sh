@@ -61,6 +61,7 @@ function check_configuration() {
     "clone_dotfiles_for_main_user"
     "stow_dotfiles_for_main_user"
     "clone_nvim_config_for_main_user"
+    "configure_git_default_branch"
   )
 
   if [[ -z "$MAIN_USER" ]]; then
@@ -213,8 +214,8 @@ function create_bootstrap_user() {
 
 function generate_sshd_keys() {
   local step="generate_sshd_keys"
-
   if $(step_executed "$step"); then return; fi
+
   timed_info "Generating sshd keys..."
   ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
   ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ''
@@ -273,8 +274,21 @@ function change_wsl_user_to_main_user() {
   local step="change_wsl_user_to_main_user"
   if $(step_executed "$step"); then return; fi
 
+  timed_info "Changing wsl user to main user..."
   mkdir -p "/home/${MAIN_USER}/.config"
   sed -i "/default = root/c\default = $MAIN_USER" /etc/wsl.conf
+
+  mark_step_as_executed "$step"
+}
+
+function configure_git_default_branch() {
+  local step="configure_git_default_branch"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Configuring default git branch..."
+  local cmd="git config --global init.defaultBranch master"
+  eval "$cmd" # for root
+  su - -c "$cmd" "${MAIN_USER}"
 
   mark_step_as_executed "$step"
 }
@@ -406,6 +420,7 @@ function main() {
   # enable_sshd
   create_main_user
   change_wsl_user_to_main_user
+  configure_git_default_branch
   clone_arch_bootstrap_for_main_user
   create_bootstrap_user
   clone_dotfiles_for_root
