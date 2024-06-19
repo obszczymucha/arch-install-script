@@ -232,7 +232,7 @@ function create_main_user() {
 
   local ssh_dir="/home/${MAIN_USER}/.ssh"
   mkdir -p "$ssh_dir"
-  cp "$HOME/.ssh/*" "${ssh_dir}/"
+  cp "$HOME/.ssh/"* "${ssh_dir}/"
   chown "${MAIN_USER}:${MAIN_USER}" "$ssh_dir"
   chown "${MAIN_USER}:${MAIN_USER}" "$ssh_dir/"*
   chmod 700 "$ssh_dir"
