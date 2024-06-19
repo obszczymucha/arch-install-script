@@ -253,7 +253,8 @@ function create_main_user() {
   if $(step_executed "$step"); then return; fi
 
   timed_info "Creating main user..."
-  useradd -m -G "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
+  groupadd "$MAIN_USER"
+  useradd -m -g "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
   passwd "$MAIN_USER"
   add_main_user_to_sudoers
 
