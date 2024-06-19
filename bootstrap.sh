@@ -368,8 +368,9 @@ function main() {
   set_locale
   set_timezone_and_clock
   set_hostname
-  # Seems like WSL2 is running OpenSSH
-  # generate_sshd_keys
+  generate_sshd_keys
+  # TODO: Seems like WSL2 is running OpenSSH on port 22 and fucking everything
+  # up.
   # enable_sshd
   create_main_user
   change_wsl_user_to_main_user
