@@ -10,6 +10,7 @@ HOSTNAME=audio
 # repeated. If you need to repeate a step, remove the that corresponts to the
 # step from this file.
 STATE_FILE='.state'
+MAIN_USER_FILE=".main_user"
 
 function timed_info() {
   echo -e "\n"[$(date +"%Y-%m-%d %k:%M:%S")]: "$1" >&2
@@ -65,12 +66,22 @@ function check_configuration() {
   )
 
   if [[ -z "$MAIN_USER" ]]; then
-    for step in "${main_user_steps[@]}"; do
-      if ! step_executed "$step" 2>&1 > /dev/null; then
-        info "MAIN_USER is required for '$step' step."
-        exit 1
-      fi
-    done
+    if [[ -f "$MAIN_USER_FILE" ]]; then
+      MAIN_USER=$(cat "$MAIN_USER_FILE")
+    fi
+
+    if [[ -z "$MAIN_USER" ]]; then
+      for step in "${main_user_steps[@]}"; do
+        if ! step_executed "$step" 2>&1 > /dev/null; then
+          info "MAIN_USER is required for '$step' step."
+          exit 1
+        fi
+      done
+    fi
+  fi
+
+  if [[ ! -f "$MAIN_USER_FILE" && -n "$MAIN_USER" ]]; then
+    echo "$MAIN_USER" > "$MAIN_USER_FILE"
   fi
 
   info "Configuration OK."
@@ -467,7 +478,7 @@ check_for_root
 main
 
 if [ $? = 0 ]; then
-  timed_info "Installation successful!"
+  timed_info "All good."
 else
   timed_info "ERROR: Something went wrong!"
 fi
