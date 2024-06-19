@@ -363,7 +363,7 @@ function clone_dotfiles_for_main_user() {
   git -C "$repo_dir/xps13" branch --set-upstream-to=origin/xps13
 
   chown -R "${MAIN_USER}:${MAIN_USER}" "$repo_dir"
-  ln -s "${repo_dir}/wsl" "${repo_dir}/current"
+  su -c "ln -s ${repo_dir}/wsl ${repo_dir}/current" "${MAIN_USER}"
 
   mark_step_as_executed "$step"
 }
@@ -374,7 +374,8 @@ function stow_dotfiles_for_main_user() {
 
   timed_info "Stowing dotfiles for main user..."
   mkdir -p "/home/${MAIN_USER}/.config"
-  pushd "/home/${MAIN_USER}/.dotfiles/current" && stow -S -t "/home/$MAIN_USER" . --adopt && popd
+  chown -R "${MAIN_USER}:${MAIN_USER}" "/home/${MAIN_USER}/.config"
+  pushd "/home/${MAIN_USER}/.dotfiles/current" && su -c "stow -S -t /home/$MAIN_USER . --adopt" "$MAIN_USER" && popd
 
   mark_step_as_executed "$step"
 }
@@ -386,7 +387,7 @@ function clone_nvim_config_for_main_user() {
   timed_info "Cloning nvim_config for main user..."
   mkdir -p "/home/${MAIN_USER}/.config"
   git clone git@github.com:obszczymucha/nvim-config.git "/home/${MAIN_USER}/.config/nvim"
-  chown -R "${MAIN_USER}:${MAIN_USER}" "/home/${MAIN_USER}/.config/nvim"
+  chown -R "${MAIN_USER}:${MAIN_USER}" "/home/${MAIN_USER}/.config"
 
   mark_step_as_executed "$step"
 }
