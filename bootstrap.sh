@@ -265,6 +265,15 @@ function create_main_user() {
   mark_step_as_executed "$step"
 }
 
+function change_wsl_user_to_main_user() {
+  local step="change_wsl_user_to_main_user"
+  if $(step_executed "$step"); then return; fi
+
+  sed -i "/default = root/c\default = $MAIN_USER" /etc/wsl.conf
+
+  mark_step_as_executed "$step"
+}
+
 function clone_arch_bootstrap_for_main_user() {
   local step="clone_arch_bootstrap_for_main_user"
   if $(step_executed "$step"); then return; fi
