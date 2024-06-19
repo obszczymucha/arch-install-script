@@ -19,6 +19,7 @@ function main() {
     ffmpeg \
     fzf \
     git \
+    git-crypt \
     git-lfs \
     gocryptfs \
     icoutils \
