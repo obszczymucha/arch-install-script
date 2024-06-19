@@ -156,12 +156,13 @@ function main() {
   add_root_to_sudoers
   create_bootstrap_user
   setup_wsl
+  install_daemonize
+  enable_systemd
+  generate_sshd_keys
+  enable_sshd
 }
 
-# main
-install_daemonize
-enable_systemd
-enable_sshd
+main
 
 if [ $? = 0 ]; then
   log_progress "Installation successful!"
