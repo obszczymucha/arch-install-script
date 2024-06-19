@@ -225,7 +225,17 @@ function clone_dotfiles_for_root() {
   if $(step_executed "$step"); then return; fi
 
   timed_info "Cloning dotfiles for root..."
-  git clone --bare git@github.com:obszczymucha/dotfiles.git "$HOME/.dotfiles"
+  local repo_dir="$HOME/.dotfiles"
+  git clone --bare git@github.com:obszczymucha/dotfiles.git "$repo_dir"
+  git -C "$repo_dir" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+  git -C "$repo_dir" fetch
+  git -C "$repo_dir" worktree add wsl
+  git -C "$repo_dir" worktree add msi
+  git -C "$repo_dir" worktree add xps13
+  git -C "$repo_dir/wsl" branch --set-upstream-to=origin/wsl
+  git -C "$repo_dir/msi" branch --set-upstream-to=origin/msi
+  git -C "$repo_dir/xps13" branch --set-upstream-to=origin/xps13
+
   ln -s "$HOME/.dotfiles/wsl" "$HOME/.dotfiles/current"
 
   mark_step_as_executed "$step"
