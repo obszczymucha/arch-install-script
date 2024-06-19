@@ -73,6 +73,9 @@ function initialize_arch_keyring() {
 }
 
 function find_the_fastest_mirror() {
+  local step="install_tools"
+  if $(step_executed "$step"); then return; fi
+
   timed_info "Updating pacman's mirrorlist..."
   pacman -Sy --noconfirm reflector
   reflector --verbose --country "${COUNTRY}" -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
