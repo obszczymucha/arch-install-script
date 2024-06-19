@@ -86,7 +86,7 @@ function create_bootstrap_user() {
   groupadd bootstrap
   useradd --password ${password} --comment 'Bootstrap User' --create-home --gid users --groups bootstrap bootstrap
   enable_passwordless_sudo_for_bootstrap
-  install --directory --owner=bootstrap --group=users --mode=0700 /home/bootstrap/.ssh
+  # install --directory --owner=bootstrap --group=users --mode=0700 /home/bootstrap/.ssh
   ssh-keygen -P '' -f /home/bootstrap/.ssh/bootstrap
   chown bootstrap:users /home/bootstrap/.ssh/bootstrap
   chmod 0600 /home/bootstrap/.ssh/bootstrap
@@ -155,13 +155,13 @@ function main() {
   set_hostname
   add_root_to_sudoers
   create_bootstrap_user
-  # install_daemonize
   setup_wsl
-  # enable_systemd
-  # enable_sshd
 }
 
-main
+# main
+install_daemonize
+enable_systemd
+enable_sshd
 
 if [ $? = 0 ]; then
   log_progress "Installation successful!"
