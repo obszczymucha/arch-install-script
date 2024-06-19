@@ -1,18 +1,16 @@
-#!/bin/bash
-
-source install.config
-
+#!/usr/bin/env bash
 set -e
+
+HOSTNAME=audio
+CITY=Melbourne
+COUNTRY=Australia
+
+function log_progress {
+  echo -e "\n"[$(date +"%Y-%m-%d %k:%M:%S")]: "$1" >&2
+}
 
 function check_configuration {
   log_progress "Checking configuration..."
-
-  if [ -z "$DESTINATION_DEVICE" ]; then
-    echo "DESTINATION_DEVICE is not defined."
-    return 1
-  else
-    echo "Found DESTINATION_DEVICE set to $DESTINATION_DEVICE"
-  fi
 
   if [ -z "$COUNTRY" ]; then
     echo "COUNTRY is not defined."
@@ -28,38 +26,7 @@ function check_configuration {
     echo "Found CITY set to $CITY"
   fi
 
-  if [ -f "parted.config" ]; then
-    echo "Found parted configuration file."
-  else
-    echo "Cannot find parted configuration file."
-    return 1
-  fi
-
   echo "Configuration OK."
-}
-
-function create_partitions {
-  log_progress "Creating partitions..."
-  parted -s ${DESTINATION_DEVICE} mklabel gpt
-  parted ${DESTINATION_DEVICE} < parted.config
-}
-
-function format_partitions {
-  log_progress "Formatting partitions..."
-  mkfs.vfat -F32 ${DESTINATION_DEVICE}1
-  mkfs.ext4 -F ${DESTINATION_DEVICE}2
-  mkswap ${DESTINATION_DEVICE}3
-  swapon ${DESTINATION_DEVICE}3
-  mkfs.ext4 -F ${DESTINATION_DEVICE}4
-}
-
-function mount_partitions_for_installation {
-  log_progress "Mounting partitions for installation..."
-  mount ${DESTINATION_DEVICE}2 /mnt
-  mkdir -p /mnt/boot
-  mount ${DESTINATION_DEVICE}1 /mnt/boot
-  mkdir -p /mnt/home
-  mount ${DESTINATION_DEVICE}4 /mnt/home
 }
 
 function find_the_fastest_mirror {
@@ -67,37 +34,120 @@ function find_the_fastest_mirror {
     eval $(echo "reflector --verbose --country '${COUNTRY}' -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist")
 }
 
-function install_the_base_system {
+function install_tools {
   log_progress "Installing the base system..."
-  pacstrap /mnt base base-devel
+  pacman -Sy --noconfirm base base-devel openssh
 }
 
-function generate_fstab {
-  log_progress "Generating an fstab..."
-  genfstab -U -p /mnt >> /mnt/etc/fstab
-  cat /mnt/etc/fstab
+function set_locale {
+  log_progress "Setting locale to UTF-8..."
+  sed -i "s/#en_US\.UTF-8 UTF-8/en_US\.UTF-8 UTF-8/g" /etc/locale.gen
+  locale-gen
+  echo LANG=en_US.UTF-8 > /etc/locale.conf
+  export LANG=en_US.UTF-8
 }
 
-function chroot_install {
-  log_progress "Continuing installation in chroot..."
-  cp chroot-install.sh /mnt
-  cp install.config /mnt
-  arch-chroot /mnt /bin/bash chroot-install.sh
-  rm -f /mnt/chroot-install.sh /mnt/install.config
+function set_timezone_and_clock {
+  log_progress "Setting timezone and clock..."
+  ln -sf /usr/share/zoneinfo/${COUNTRY}/${CITY} /etc/localtime
+  hwclock --systohc --utc
+}
+
+function set_hostname {
+  log_progress "Setting hostname..."
+  echo ${HOSTNAME} > /etc/hostname
+}
+
+function enable_wheel_group {
+  local sudoers_file='/etc/sudoers'
+
+  if ! grep -q '%wheel ALL=(ALL) ALL' "$sudoers_file" 2> /dev/null; then
+    echo '%wheel ALL=(ALL) ALL' >> "$sudoers_file"
+  else
+    sed -i '/%wheel ALL=(ALL) ALL/c\%wheel ALL=(ALL) ALL' "$sudoers_file"
+  fi
+}
+
+function enable_passwordless_sudo_for_bootstrap {
+  local sudoers_file='/etc/sudoers'
+
+  if ! grep -q 'bootstrap ALL=(ALL) NOPASSWD: ALL' "$sudoers_file" 2> /dev/null; then
+    echo 'bootstrap ALL=(ALL) NOPASSWD: ALL' >> "$sudoers_file"
+  fi
+}
+
+function create_bootstrap_user {
+  log_progress "Creating bootstrap user for bootstrapping..."
+  local password
+  password=$(/usr/bin/openssl passwd 'bootstrap')
+  groupadd bootstrap
+  useradd --password ${password} --comment 'Bootstrap User' --create-home --gid users --groups bootstrap bootstrap
+  enable_passwordless_sudo_for_bootstrap
+  install --directory --owner=bootstrap --group=users --mode=0700 /home/bootstrap/.ssh
+  ssh-keygen -P '' -f /home/bootstrap/.ssh/bootstrap
+  chown bootstrap:users /home/bootstrap/.ssh/bootstrap
+  chmod 0600 /home/bootstrap/.ssh/bootstrap
+  chown bootstrap:users /home/bootstrap/.ssh/bootstrap.pub
+  chmod 0600 /home/bootstrap/.ssh/bootstrap.pub
+  cat /home/bootstrap/.ssh/bootstrap.pub > /home/bootstrap/.ssh/authorized_keys
+  chown bootstrap:users /home/bootstrap/.ssh/authorized_keys
+  chmod 0600 /home/bootstrap/.ssh/authorized_keys
+  mkdir -p /root/.ssh
+  chown root:root /root/.ssh
+  chmod 0700 /root/.ssh
+  cp /home/bootstrap/.ssh/bootstrap /root/.ssh/
+}
+
+function install_daemonize {
+  local aur_dir='/home/bootstrap/.projects/ops/aur'
+  local package_dir="$aur_dir/daemonize"
+  su bootstrap -c "mkdir -p $aur_dir"
+  su bootstrap -c "git clone https://aur.archlinux.org/daemonize.git $package_dir"
+  su bootstrap -c "cd $package_dir && makepkg -s --noconfirm"
+  rm "$package_dir/"daemonize-debug*.tar.zst
+  mv "$package_dir/"*.tar.zst "$package_dir/"daemonize.tar.zst
+  pacman -U --noconfirm "$package_dir/daemonize.tar.zst"
+}
+
+function add_root_to_sudoers {
+  local sudoers_file='/etc/sudoers'
+
+  if ! grep -q 'root ALL=(ALL:ALL) ALL' "$sudoers_file" 2> /dev/null; then
+    echo 'root ALL=(ALL:ALL) ALL' >> "$sudoers_file"
+  fi
+}
+
+function enable_systemd {
+  cp etc/profile.d/00-wsl2-systemd.sh /etc/profile.d/
+  chmod +x /etc/profile.d/00-wsl2-systemd.sh
+}
+
+function setup_wsl {
+  cp etc/wsl.conf /etc/
+}
+
+function enable_sshd {
+  log_progress "Enabling sshd..."
+  systemctl enable sshd.service
+  # systemctl start sshd
 }
 
 function run {
   check_configuration
-  create_partitions
-  format_partitions
-  mount_partitions_for_installation
   find_the_fastest_mirror
-  install_the_base_system
-  generate_fstab
-  chroot_install
+  install_tools
+  set_locale
+  set_timezone_and_clock
+  set_hostname
+  create_bootstrap_user
+  install_daemonize
+  add_root_to_sudoers
+  enable_systemd
 }
 
-run
+# run
+# enable_sshd
+setup_wsl
 
 if [ $? = 0 ]; then
   log_progress "Installation successful!"
