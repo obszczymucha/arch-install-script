@@ -192,7 +192,7 @@ function create_bootstrap_user() {
   useradd --password ${password} --comment 'Bootstrap User' --create-home --gid users --groups bootstrap bootstrap
   add_bootstrap_user_to_sudoers
   install --directory --owner=bootstrap --group=users --mode=0700 /home/bootstrap/.ssh
-  ssh-keygen -P '' -f /home/bootstrap/.ssh/bootstrap
+  ssh-keygen -P '' -t rsa -b 4096 -f /home/bootstrap/.ssh/bootstrap
   chown bootstrap:users /home/bootstrap/.ssh/bootstrap
   chmod 0600 /home/bootstrap/.ssh/bootstrap
   chown bootstrap:users /home/bootstrap/.ssh/bootstrap.pub
