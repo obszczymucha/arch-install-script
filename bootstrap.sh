@@ -19,21 +19,29 @@ function info() {
   echo "$@" >&2
 }
 
+function check_for_root() {
+  if [[ $(whoami) != "root" ]]; then
+    echo "This script must be run as root." >&2
+    exit 1
+  fi
+}
+
 function check_configuration() {
   timed_info "Checking configuration..."
 
   if [ -z "$COUNTRY" ]; then
     info "COUNTRY is not defined."
     return 1
-  else
-    info "Found COUNTRY set to $COUNTRY"
   fi
 
   if [ -z "$CITY" ]; then
     info "CITY is not defined."
     return 1
-  else
-    info "Found CITY set to $CITY"
+  fi
+
+  if [[ -z "$MAIN_USER" ]]; then
+    info "MAIN_USER is not defined."
+    return 1
   fi
 
   info "Configuration OK."
@@ -181,15 +189,18 @@ function create_bootstrap_user() {
   mark_step_as_executed "$step"
 }
 
-# TODO: check if we still need this.
 function generate_sshd_keys() {
+  local step="generate_sshd_keys"
+
+  if $(step_executed "$step"); then return; fi
   timed_info "Generating sshd keys..."
   ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
   ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ''
   ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
+
+  mark_step_as_executed "$step"
 }
 
-# TODO: check if we still need this.
 function enable_sshd() {
   local step="enable_sshd"
   if $(step_executed "$step"); then return; fi
@@ -201,20 +212,47 @@ function enable_sshd() {
   mark_step_as_executed "$step"
 }
 
-function clone_dotfiles() {
-  local step="clone_dotfiles"
+function clone_dotfiles_for_root() {
+  local step="clone_dotfiles_for_root"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Cloning dotfiles..."
+  timed_info "TODO: Cloning dotfiles for root..."
+
+  # mark_step_as_executed "$step"
+}
+
+function clone_nvim_config_for_root() {
+  local step="clone_nvim_config_for_root"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "TODO: Cloning nvim_config for root..."
+
+  # mark_step_as_executed "$step"
+}
+
+function create_main_user() {
+  local step="create_main_user"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "TODO: Creating main user..."
+
+  # mark_step_as_executed "$step"
+}
+
+function clone_dotfiles_for_main_user() {
+  local step="clone_dotfiles_for_main_user"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "TODO: Cloning dotfiles for main user..."
 
   # mark_step_as_executed "$step"
 }
 
 function clone_nvim_config() {
-  local step="clone_nvim_config"
+  local step="clone_nvim_config_for_main_user"
   if $(step_executed "$step"); then return; fi
 
-  timed_info "TODO: Cloning dotfiles..."
+  timed_info "TODO: Cloning nvim_config for main user..."
 
   # mark_step_as_executed "$step"
 }
@@ -227,13 +265,16 @@ function main() {
   set_locale
   set_timezone_and_clock
   set_hostname
-  # add_root_to_sudoers
-  # create_bootstrap_user
-  # enable_sshd
-  clone_dotfiles
-  clone_nvim_config
+  generate_sshd_keys
+  enable_sshd
+  clone_dotfiles_for_root
+  clone_nvim_config_for_root
+  create_main_user
+  clone_dotfiles_for_main_user
+  clone_nvim_config_for_main_user
 }
 
+check_for_root
 main
 
 if [ $? = 0 ]; then
