@@ -52,6 +52,7 @@ function main() {
     svn \
     the_silver_searcher \
     tig \
+    tmux \
     tree \
     unzip \
     wget \
