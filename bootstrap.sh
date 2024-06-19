@@ -231,6 +231,16 @@ function clone_dotfiles_for_root() {
   mark_step_as_executed "$step"
 }
 
+function stow_dotfiles_for_root() {
+  local step="stow_dotfiles_for_root"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Stowing dotfiles for root..."
+  pushd "$HOME/.dotfiles/current" && stow -S -t "$HOME" . --adopt && popd
+
+  mark_step_as_executed "$step"
+}
+
 function clone_nvim_config_for_root() {
   local step="clone_nvim_config_for_root"
   if $(step_executed "$step"); then return; fi
@@ -309,6 +319,7 @@ function main() {
   # generate_sshd_keys
   # enable_sshd
   clone_dotfiles_for_root
+  stow_dotfiles_for_root
   clone_nvim_config_for_root
   change_shell_for_root
   create_main_user
