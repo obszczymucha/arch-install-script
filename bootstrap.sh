@@ -79,8 +79,13 @@ function find_the_fastest_mirror() {
 }
 
 function install_tools() {
+  local step="install_tools"
+  if $(step_executed "$step"); then return; fi
+
   timed_info "Installing/updating tools..."
   source pacman.sh
+
+  mark_step_as_executed "$step"
 }
 
 function set_locale() {
