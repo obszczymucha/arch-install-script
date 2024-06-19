@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
 function main() {
-  sudo pacman -Syyu less
+  pacman -Syyu --noconfirm \
+    base \
+    base-devel \
+    openssh \
+
+    less
 }
 
 main
