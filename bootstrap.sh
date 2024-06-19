@@ -315,6 +315,7 @@ function stow_dotfiles_for_root() {
   if $(step_executed "$step"); then return; fi
 
   timed_info "Stowing dotfiles for root..."
+  mkdir -p "$HOME/.config"
   pushd "$HOME/.dotfiles/current" && stow -S -t "$HOME" . --adopt && popd
 
   mark_step_as_executed "$step"
