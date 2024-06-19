@@ -53,7 +53,7 @@ function check_configuration() {
     return 1
   fi
 
-  if [[ -z "$MAIN_USER" && ! $(step_executed "create_main_user") ]]; then
+  if [[ -z "$MAIN_USER" ]] && ! step_executed "create_main_user" 2>&1 > /dev/null; then
     info "MAIN_USER is not defined."
     return 1
   fi
