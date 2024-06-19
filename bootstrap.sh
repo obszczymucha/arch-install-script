@@ -53,9 +53,19 @@ function check_configuration() {
     return 1
   fi
 
-  if [[ -z "$MAIN_USER" ]] && ! step_executed "create_main_user" 2>&1 > /dev/null; then
-    info "MAIN_USER is not defined."
-    return 1
+  local main_user_steps=(
+    "create_main_user"
+    "add_main_user_to_sudoers"
+    "clone_arch_bootstrap_for_main_user"
+  )
+
+  if [[ -z "$MAIN_USER" ]]; then
+    for step in "${main_user_steps[@]}"; do
+      if ! step_executed "$step" 2>&1 > /dev/null; then
+        info "MAIN_USER is required for '$step' step."
+        exit 1
+      fi
+    done
   fi
 
   info "Configuration OK."
@@ -220,15 +230,29 @@ function enable_sshd() {
   mark_step_as_executed "$step"
 }
 
+function add_main_user_to_sudoers() {
+  local step="add_main_user_to_sudoers"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Adding main user to sudoers..."
+  local sudoers_file='/etc/sudoers'
+
+  if ! grep -q "$MAIN_USER ALL=(ALL:ALL) ALL" "$sudoers_file" 2> /dev/null; then
+    echo "$MAIN_USER ALL=(ALL:ALL) ALL" >> "$sudoers_file"
+  fi
+
+  mark_step_as_executed "$step"
+}
+
 function create_main_user() {
   local step="create_main_user"
   if $(step_executed "$step"); then return; fi
 
   timed_info "Creating main user..."
-  # groupadd "$MAIN_USER"
-  # useradd -m -g "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
-  # passwd "$MAIN_USER"
-  # add_main_user_to_sudoers
+  groupadd "$MAIN_USER"
+  useradd -m -g "$MAIN_USER" -s /bin/zsh -d "/home/$MAIN_USER" "$MAIN_USER"
+  passwd "$MAIN_USER"
+  add_main_user_to_sudoers
 
   local ssh_dir="/home/${MAIN_USER}/.ssh"
   mkdir -p "$ssh_dir"
@@ -237,6 +261,19 @@ function create_main_user() {
   chown "${MAIN_USER}:${MAIN_USER}" "$ssh_dir/"*
   chmod 700 "$ssh_dir"
   chmod 600 "$ssh_dir/"*
+
+  mark_step_as_executed "$step"
+}
+
+function clone_arch_bootstrap_for_main_user() {
+  local step="clone_arch_bootstrap_for_main_user"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Cloning arch-bootstrap for main user..."
+  local ops_dir="/home/${MAIN_USER}/.projects/ops"
+  mkdir -p "$ops_dir"
+
+  git clone git@github.com:obszczymucha/arch-bootstrap.git "${ops_dir}/arch-bootstrap"
 
   mark_step_as_executed "$step"
 }
@@ -289,20 +326,6 @@ function change_shell_for_root() {
 
   timed_info "Changing shell for root..."
   chsh -s /bin/zsh
-
-  mark_step_as_executed "$step"
-}
-
-function add_main_user_to_sudoers() {
-  local step="add_main_user_to_sudoers"
-  if $(step_executed "$step"); then return; fi
-
-  timed_info "Adding main user to sudoers..."
-  local sudoers_file='/etc/sudoers'
-
-  if ! grep -q "$MAIN_USER ALL=(ALL:ALL) ALL" "$sudoers_file" 2> /dev/null; then
-    echo "$MAIN_USER ALL=(ALL:ALL) ALL" >> "$sudoers_file"
-  fi
 
   mark_step_as_executed "$step"
 }
