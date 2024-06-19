@@ -242,6 +242,16 @@ function clone_nvim_config_for_root() {
   mark_step_as_executed "$step"
 }
 
+function change_shell_for_root() {
+  local step="change_shell_for_root"
+  if $(step_executed "$step"); then return; fi
+
+  timed_info "Changing shell for root..."
+  chsh -s /bin/zsh
+
+  mark_step_as_executed "$step"
+}
+
 function add_main_user_to_sudoers() {
   local step="add_main_user_to_sudoers"
   if $(step_executed "$step"); then return; fi
@@ -300,6 +310,7 @@ function main() {
   # enable_sshd
   clone_dotfiles_for_root
   clone_nvim_config_for_root
+  change_shell_for_root
   create_main_user
   clone_dotfiles_for_main_user
   clone_nvim_config_for_main_user
