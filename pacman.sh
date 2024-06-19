@@ -31,6 +31,7 @@ function main() {
     mkvtoolnix-gui \
     ncdu \
     neovim \
+    net-tools \
     openssh \
     pacman-contrib \
     pkg-config \
