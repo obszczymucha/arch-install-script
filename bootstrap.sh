@@ -406,6 +406,36 @@ function clone_nvim_config_for_main_user() {
   mark_step_as_executed "$step"
 }
 
+function install_oh_my_posh() {
+  local repo_dir="/home/${MAIN_USER}/.projects/ops/aur/oh-my-posh"
+
+  rm -f "$repo_dir/"*.zst
+  rm -f "$repo_dir/"*.gz
+
+  if [[ ! -d "$repo_dir" ]]; then
+    timed_info "Installing oh-my-posh..."
+    su - -c "git clone https://aur.archlinux.org/oh-my-posh.git $repo_dir" "$MAIN_USER"
+    su - -c "cd $repo_dir; makepkg -s --noconfirm" "$MAIN_USER"
+  else
+    timed_info "Updating oh-my-posh..."
+    su - -c "git -C $repo_dir fetch" "$MAIN_USER"
+    local behind_count=$(git -C "$repo_dir" rev-list --count master..origin/master)
+
+    if (( behind_count == 0 )); then
+      info "oh-my-posh is up to date."
+      return
+    fi
+
+    info "New updates available for oh-my-posh. Building..."
+    su - -c "git -C $repo_dir rebase origin/master" "$MAIN_USER"
+    su - -c "cd $repo_dir; makepkg -s --noconfirm" "$MAIN_USER"
+  fi
+
+  rm -f "$repo_dir/"oh-my-posh-debug*
+  mv "$repo_dir/"*.zst "$repo_dir/oh-my-posh.tar.zst"
+  pacman -U --noconfirm "$repo_dir/oh-my-posh.tar.zst"
+}
+
 function main() {
   check_configuration
   initialize_arch_keyring
@@ -430,6 +460,7 @@ function main() {
   clone_dotfiles_for_main_user
   stow_dotfiles_for_main_user
   clone_nvim_config_for_main_user
+  install_oh_my_posh
 }
 
 check_for_root
