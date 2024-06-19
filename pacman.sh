@@ -2,11 +2,11 @@
 
 function main() {
   pacman -Syyu --noconfirm \
-    base \
-    base-devel \
     ansible \
     aria2 \
     at \
+    base \
+    base-devel \
     binutils \
     cmus \
     diffutils \
@@ -21,6 +21,7 @@ function main() {
     git \
     git-crypt \
     git-lfs \
+    go \
     gocryptfs \
     icoutils \
     inetutils \
