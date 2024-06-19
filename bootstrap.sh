@@ -360,7 +360,7 @@ function main() {
   # generate_sshd_keys
   # enable_sshd
   create_main_user
-  install_oh_my_posh
+  clone_arch_bootstrap_for_main_user
   clone_dotfiles_for_root
   stow_dotfiles_for_root
   clone_nvim_config_for_root
