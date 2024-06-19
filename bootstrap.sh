@@ -57,6 +57,7 @@ function check_configuration() {
     "create_main_user"
     "add_main_user_to_sudoers"
     "clone_arch_bootstrap_for_main_user"
+    "change_wsl_user_to_main_user"
   )
 
   if [[ -z "$MAIN_USER" ]]; then
