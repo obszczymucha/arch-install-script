@@ -1,10 +1,9 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 source install.config
+set -eu
+trap 'log_progress "ERROR: Installation did not complete successfully!"' ERR
 
-set -e
-
-function check_configuration {
+check_configuration() {
   log_progress "Checking configuration..."
 
   if [ -z "$DESTINATION_DEVICE" ]; then
@@ -38,47 +37,47 @@ function check_configuration {
   echo "Configuration OK."
 }
 
-function create_partitions {
+create_partitions() {
   log_progress "Creating partitions..."
-  parted -s ${DESTINATION_DEVICE} mklabel gpt
-  parted ${DESTINATION_DEVICE} < parted.config
+  parted "${DESTINATION_DEVICE}" < parted.config
 }
 
-function format_partitions {
+format_partitions() {
   log_progress "Formatting partitions..."
-  mkfs.vfat -F32 ${DESTINATION_DEVICE}1
-  mkfs.ext4 -F ${DESTINATION_DEVICE}2
-  mkswap ${DESTINATION_DEVICE}3
-  swapon ${DESTINATION_DEVICE}3
-  mkfs.ext4 -F ${DESTINATION_DEVICE}4
+  mkfs.vfat -F32 "${DESTINATION_DEVICE}1"
+  mkfs.ext4 -F "${DESTINATION_DEVICE}2"
+  mkswap "${DESTINATION_DEVICE}3"
+  swapon "${DESTINATION_DEVICE}3"
+  mkfs.ext4 -F "${DESTINATION_DEVICE}4"
+  mkfs.ext4 -F "${DESTINATION_DEVICE}5"
 }
 
-function mount_partitions_for_installation {
+mount_partitions_for_installation() {
   log_progress "Mounting partitions for installation..."
-  mount ${DESTINATION_DEVICE}2 /mnt
+  mount "${DESTINATION_DEVICE}2" /mnt
   mkdir -p /mnt/boot
-  mount ${DESTINATION_DEVICE}1 /mnt/boot
+  mount "${DESTINATION_DEVICE}1" /mnt/boot
   mkdir -p /mnt/home
-  mount ${DESTINATION_DEVICE}4 /mnt/home
+  mount "${DESTINATION_DEVICE}4" /mnt/home
 }
 
-function find_the_fastest_mirror {
-    pacman -Sy --noconfirm reflector
-    eval $(echo "reflector --verbose --country '${COUNTRY}' -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist")
+find_the_fastest_mirror() {
+  pacman -Sy --noconfirm reflector
+  reflector --verbose --country "${COUNTRY}" -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
 }
 
-function install_the_base_system {
+install_the_base_system() {
   log_progress "Installing the base system..."
   pacstrap /mnt base base-devel
 }
 
-function generate_fstab {
+generate_fstab() {
   log_progress "Generating an fstab..."
   genfstab -U -p /mnt >> /mnt/etc/fstab
   cat /mnt/etc/fstab
 }
 
-function chroot_install {
+chroot_install() {
   log_progress "Continuing installation in chroot..."
   cp chroot-install.sh /mnt
   cp install.config /mnt
@@ -86,7 +85,7 @@ function chroot_install {
   rm -f /mnt/chroot-install.sh /mnt/install.config
 }
 
-function run {
+main() {
   check_configuration
   create_partitions
   format_partitions
@@ -95,13 +94,8 @@ function run {
   install_the_base_system
   generate_fstab
   chroot_install
+  log_progress "Installation successful!"
 }
 
-run
-
-if [ $? = 0 ]; then
-  log_progress "Installation successful!"
-else
-  log_progress "ERROR: Installation did not complete successfully!"
-fi
+main "$@"
 
