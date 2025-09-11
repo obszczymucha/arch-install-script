@@ -121,19 +121,9 @@ install_and_enable_sshd() {
   systemctl start sshd
 }
 
-install_python2_for_ansible_bootstrapping() {
-  log_progress "Installing python2 for ansible bootstrapping..."
-  pacman -S --noconfirm python2
-}
-
-install_ansible() {
-  log_progress "Installing ansible..."
-  pacman -S --noconfirm ansible
-}
-
-install_wifi_essentials() {
-  log_progress "Installing wifi essentials..."
-  pacman -S --noconfirm dialog wpa_supplicant
+install_tools() {
+  log_progress "Installing tools..."
+  pacman -S --noconfirm ansible git-crypt
 }
 
 main() {
@@ -145,9 +135,7 @@ main() {
   install_uefi_bootloader
   install_and_enable_sshd
   create_bootstrap_user_for_bootstrapping
-  install_python2_for_ansible_bootstrapping
-  install_wifi_essentials
-  install_ansible
+  install_tools
 
   log_progress "Installation successful! Type 'reboot' and enjoy your Arch Linux!"
 }
