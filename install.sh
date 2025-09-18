@@ -44,21 +44,24 @@ create_partitions() {
 
 format_partitions() {
   log_progress "Formatting partitions..."
-  mkfs.vfat -F32 "${DESTINATION_DEVICE}1"
-  mkfs.ext4 -F "${DESTINATION_DEVICE}2"
-  mkswap "${DESTINATION_DEVICE}3"
-  swapon "${DESTINATION_DEVICE}3"
-  mkfs.ext4 -F "${DESTINATION_DEVICE}4"
-  mkfs.ext4 -F "${DESTINATION_DEVICE}5"
+  mkfs.vfat -F32 "${DESTINATION_DEVICE}p1"
+  mkfs.vfat -F32 "${DESTINATION_DEVICE}p2"
+  mkswap "${DESTINATION_DEVICE}p3"
+  swapon "${DESTINATION_DEVICE}p3"
+  mkfs.ext4 -F "${DESTINATION_DEVICE}p4"
+  mkfs.ext4 -F "${DESTINATION_DEVICE}p5"
+  mkfs.ext4 -F "${DESTINATION_DEVICE}p6"
 }
 
 mount_partitions_for_installation() {
   log_progress "Mounting partitions for installation..."
-  mount "${DESTINATION_DEVICE}2" /mnt
+  mount "${DESTINATION_DEVICE}p4" /mnt
+  mkdir -p /mnt/efi
+  mount "${DESTINATION_DEVICE}p1" /mnt/efi
   mkdir -p /mnt/boot
-  mount "${DESTINATION_DEVICE}1" /mnt/boot
+  mount "${DESTINATION_DEVICE}p2" /mnt/boot
   mkdir -p /mnt/home
-  mount "${DESTINATION_DEVICE}4" /mnt/home
+  mount "${DESTINATION_DEVICE}p5" /mnt/home
 }
 
 find_the_fastest_mirror() {
@@ -68,7 +71,7 @@ find_the_fastest_mirror() {
 
 install_the_base_system() {
   log_progress "Installing the base system..."
-  pacstrap /mnt base base-devel
+  pacstrap /mnt base base-devel linux linux-firmware
 }
 
 generate_fstab() {

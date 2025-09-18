@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 source install.config
-set -eu
+set -e
 trap 'log_progress "ERROR: Installation did not complete successfully!"' ERR
 
 PASSWORD=$(/usr/bin/openssl passwd -1 "bootstrap")
@@ -25,7 +25,7 @@ set_hostname() {
 }
 
 get_network_interface() {
-  IFS=': ' read -r TOKENS <<< "$(ip link | grep "state UP")"; echo "${TOKENS[1]}"
+  ip link | grep "state UP" | cut -d: -f2 | tr -d ' '
 }
 
 enable_dhcp() {
@@ -40,7 +40,7 @@ enable_dhcp() {
     echo "Found active network interface: ${network_interface}"
   fi
 
-  systemctl enable "dhcpcd@${network_interface}.service"
+  systemctl enable dhcpcd@${network_interface}.service
 }
 
 install_grub_bootloader() {
@@ -69,10 +69,12 @@ get_partuuid() {
 install_uefi_bootloader() {
   log_progress "Installing bootloader..."
   local partuuid
-  partuuid=$(get_partuuid "${DESTINATION_DEVICE}2")
+  partuuid=$(get_partuuid "${DESTINATION_DEVICE}p4")
+
+  mkdir -p /boot/loader/entries
 
   pacman -S --noconfirm dosfstools intel-ucode
-  bootctl --path=/boot install
+  bootctl --esp-path=/efi --boot-path=/boot install
   {
     echo "title       Arch Linux"
     echo "linux       /vmlinuz-linux"
@@ -109,7 +111,7 @@ create_bootstrap_user_for_bootstrapping() {
   cat /home/bootstrap/.ssh/bootstrap.pub > /home/bootstrap/.ssh/authorized_keys
   chown bootstrap:users /home/bootstrap/.ssh/authorized_keys
   chmod 0600 /home/bootstrap/.ssh/authorized_keys
-  mkdir /root/.ssh
+  mkdir -p /root/.ssh
   chmod 0700 /root/.ssh
   cp /home/bootstrap/.ssh/bootstrap /root/.ssh/
 }
@@ -131,7 +133,7 @@ main() {
   set_locale
   set_timezone_and_clock
   set_hostname
-  enable_dhcp
+#  enable_dhcp
   install_uefi_bootloader
   install_and_enable_sshd
   create_bootstrap_user_for_bootstrapping
